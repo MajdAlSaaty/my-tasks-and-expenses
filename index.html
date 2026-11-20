@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0e1016">
+<title>My Tasks and Expenses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" id="manifestLink">
+<style>
+/* Dark: muted, harmonious (purple -> blue) */
+:root{
+  --bg:#13151d; --surface:#1b1e2a; --surface-2:#232736; --line:#323852;
+  --text:#dcdfea; --muted:#8c93a8;
+  --accent:#8a78c6; --accent-2:#6b82c9;
+  --green:#68b896; --red:#d08989; --amber:#cfae72;
+  --radius:16px;
+  --danger-bg:rgba(208,137,137,.14);
+}
+/* Light: vivid purple -> blue */
+[data-theme="light"]{
+  --bg:#f5f3ff; --surface:#ffffff; --surface-2:#f4f2fd; --line:#ddd6f5;
+  --text:#1d1a3a; --muted:#6a6788;
+  --accent:#7c3aed; --accent-2:#2563eb;
+  --green:#1f9d6b; --red:#e04f5f; --amber:#d48806;
+  --danger-bg:rgba(224,79,95,.08);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0; font-family:"Segoe UI",Tahoma,system-ui,-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 520px at 100% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 60%),
+    var(--bg);
+  color:var(--text); min-height:100vh;
+  transition:background .3s,color .3s;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#3a4258;border-radius:10px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== Topbar ===== */
+.topbar{
+  position:sticky; top:0; z-index:60;
+  display:flex; align-items:center; gap:10px;
+  height:70px; padding:0 16px;
+  background:color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.icon-btn{
+  width:40px;height:40px;border-radius:11px;
+  background:var(--surface-2); border:1px solid var(--line);
+  color:var(--text); font-size:16px; cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:.2s; flex:0 0 40px;
+}
+.icon-btn:hover{background:color-mix(in srgb, var(--accent) 14%, var(--surface-2)); border-color:var(--accent)}
+.icon-btn.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;white-space:nowrap}
+.brand .logo{
+  width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;font-size:14px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%, transparent);
+}
+.task-badge{
+  font-size:12px;font-weight:800;color:var(--amber);
+  background:color-mix(in srgb,var(--amber) 15%, transparent);
+  border:1px solid color-mix(in srgb,var(--amber) 35%, transparent);
+  padding:3px 10px;border-radius:20px;min-width:26px;text-align:center;
+}
+.spacer{flex:1}
+.search-input{
+  background:var(--surface-2); border:1px solid var(--line); color:var(--text);
+  padding:9px 13px; border-radius:11px; font:inherit; font-size:13px; outline:none;
+  width:200px; transition:.2s;
+}
+.search-input:focus{border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%, transparent)}
+.search-input::placeholder{color:var(--muted)}
+
+.money-pill{
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:5px 12px;border-radius:11px;
+  background:var(--surface-2);border:1px solid var(--line);
+  line-height:1.25; white-space:nowrap;
+}
+.money-pill .lbl{font-size:10.5px;color:var(--muted)}
+.money-pill strong{font-size:13px;font-weight:800}
+.income-pill strong{color:var(--green)}
+.expense-pill strong{color:var(--red)}
+
+.balance{
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:5px 16px;border-radius:13px;
+  background:linear-gradient(135deg, color-mix(in srgb,var(--accent) 22%, transparent), color-mix(in srgb,var(--accent-2) 14%, transparent));
+  border:1px solid color-mix(in srgb,var(--accent) 42%, transparent);
+  line-height:1.25; white-space:nowrap;
+  box-shadow:0 8px 26px color-mix(in srgb,var(--accent) 16%, transparent);
+}
+.balance .lbl{font-size:10.5px;color:color-mix(in srgb,var(--text) 70%, var(--accent))}
+.balance strong{font-size:18px;font-weight:800;color:var(--text)}
+.balance.negative{background:linear-gradient(135deg, color-mix(in srgb,var(--red) 22%, transparent), color-mix(in srgb,var(--red) 8%, transparent));border-color:color-mix(in srgb,var(--red) 45%, transparent)}
+.balance.negative strong{color:var(--red)}
+body.hide-money .money-pill strong,
+body.hide-money .balance strong,
+body.hide-money .total,
+body.hide-money .tx-amount{color:transparent !important;text-shadow:0 0 8px currentColor;position:relative}
+body.hide-money .money-pill strong::after,
+body.hide-money .balance strong::after,
+body.hide-money .total::after,
+body.hide-money .tx-amount::after{content:"•••";color:var(--text);position:absolute;inset:0;display:grid;place-items:center}
+
+/* ===== Layout ===== */
+.layout{display:flex;align-items:flex-start;min-height:calc(100vh - 70px)}
+
+/* ===== Sidebar ===== */
+.sidebar{
+  position:sticky; top:70px; height:calc(100vh - 70px);
+  width:230px; flex:0 0 230px; padding:18px 12px;
+  display:flex; flex-direction:column; gap:6px;
+  border-right:1px solid var(--line);
+  background:linear-gradient(180deg, color-mix(in srgb,var(--text) 2.5%, transparent), transparent 60%);
+  overflow:hidden; transition:width .26s ease, flex-basis .26s ease, padding .26s ease;
+}
+.sidebar.collapsed{width:0;flex-basis:0;padding:18px 0;border-right:none}
+.nav-item{
+  display:flex;align-items:center;gap:11px;
+  width:100%;padding:12px 14px;border-radius:12px;
+  background:transparent;border:1px solid transparent;
+  color:var(--muted);font:inherit;font-weight:700;font-size:13.5px;
+  cursor:pointer;white-space:nowrap;transition:.2s;text-align:left;
+}
+.nav-item .ico{
+  width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--text) 6%, transparent);font-size:12px;flex:0 0 26px;
+}
+.nav-item:hover{background:color-mix(in srgb,var(--text) 4.5%, transparent);color:var(--text)}
+.nav-item.active{
+  background:linear-gradient(135deg, color-mix(in srgb,var(--accent) 24%, transparent), color-mix(in srgb,var(--accent-2) 12%, transparent));
+  color:var(--text); border-color:color-mix(in srgb,var(--accent) 38%, transparent);
+}
+.nav-item.active .ico{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.sidebar-foot{
+  margin-top:auto;font-size:11px;color:var(--muted);line-height:1.7;
+  padding:10px 6px;border-top:1px solid var(--line);white-space:nowrap;
+}
+
+/* ===== Content ===== */
+.content{flex:1;min-width:0;padding:22px 22px 60px}
+.view{animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.panel{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:18px; padding:18px; margin-bottom:18px;
+  box-shadow:0 10px 34px color-mix(in srgb,var(--text) 8%, transparent);
+}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.panel-head h2{margin:0;font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px}
+.date-chip{
+  font-size:11.5px;font-weight:600;color:var(--muted);
+  background:var(--surface-2);border:1px solid var(--line);
+  padding:3px 10px;border-radius:20px;
+}
+.badge-warn{
+  font-size:12px;font-weight:800;color:var(--amber);
+  background:color-mix(in srgb,var(--amber) 15%, transparent);
+  border:1px solid color-mix(in srgb,var(--amber) 35%, transparent);
+  padding:2px 10px;border-radius:20px;min-width:26px;text-align:center;
+}
+
+/* ===== Add form ===== */
+.add-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:16px}
+.add-form input,.add-form select{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  font:inherit;font-size:13px;padding:11px 13px;border-radius:11px;outline:none;
+  transition:border-color .2s, box-shadow .2s; color-scheme:dark; min-width:0;
+}
+[data-theme="light"] .add-form input,[data-theme="light"] .add-form select{color-scheme:light}
+.add-form input::placeholder{color:var(--muted)}
+.add-form input:focus,.add-form select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%, transparent)}
+.add-form input[type=date]{width:150px}
+.add-form input[type=number]{width:110px}
+.add-form button{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#fff;border:none;padding:11px 22px;border-radius:11px;
+  font:inherit;font-weight:800;font-size:13px;cursor:pointer;
+  transition:transform .15s, filter .2s;box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 28%, transparent);
+  white-space:nowrap;
+}
+.add-form button:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.add-form button:active{transform:translateY(0)}
+
+/* ===== Kanban ===== */
+.kanban{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.col{
+  background:var(--surface-2); border:1.5px dashed var(--line);
+  border-radius:14px; padding:12px;
+  display:flex; flex-direction:column; gap:10px; min-height:200px;
+  transition:border-color .18s, background .18s;
+}
+.col.drag-over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%, var(--surface-2))}
+.col-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--text)}
+.col-head .count{
+  margin-inline-start:auto; font-size:11.5px; font-weight:800; color:var(--muted);
+  background:color-mix(in srgb,var(--text) 6%, transparent);
+  padding:1px 9px; border-radius:20px;
+}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 9px}
+.dot.todo{background:var(--amber);box-shadow:0 0 10px color-mix(in srgb,var(--amber) 60%, transparent)}
+.dot.doing{background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 60%, transparent)}
+.dot.done{background:var(--green);box-shadow:0 0 10px color-mix(in srgb,var(--green) 60%, transparent)}
+.dot.income{background:var(--green)}
+.dot.expense{background:var(--red)}
+.col-body{display:flex;flex-direction:column;gap:9px;flex:1;min-height:60px}
+
+/* ===== Task card ===== */
+.task{
+  display:flex; align-items:flex-start; gap:8px;
+  background:linear-gradient(180deg, color-mix(in srgb,var(--text) 3%, var(--surface)), var(--surface-2));
+  border:1px solid var(--line); border-radius:12px; padding:10px 11px;
+  cursor:grab; transition:transform .15s, border-color .15s, box-shadow .15s;
+  animation:fade .2s ease; user-select:none;
+}
+.task:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 35%, var(--line));box-shadow:0 8px 20px color-mix(in srgb,var(--text) 15%, transparent)}
+.task:active{cursor:grabbing}
+.task.dragging{opacity:.35;transform:scale(.98)}
+.task-main{flex:1;min-width:0;cursor:pointer}
+.task-title{font-size:13.5px;font-weight:700;line-height:1.5;word-break:break-word}
+.task-meta{font-size:11px;color:var(--muted);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.task-meta .cat{
+  background:color-mix(in srgb,var(--accent) 18%, transparent);
+  color:color-mix(in srgb,var(--accent) 85%, var(--text));
+  padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;
+}
+.task-meta .pomo{color:var(--amber);font-weight:700}
+.task.is-done .task-title{text-decoration:line-through;color:var(--muted)}
+.task-actions{display:flex;gap:3px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;max-width:52px}
+.mini-btn{
+  width:22px;height:22px;border-radius:6px;background:color-mix(in srgb,var(--text) 5%, transparent);
+  border:1px solid var(--line); color:var(--muted); font-size:11px; cursor:pointer;
+  display:grid;place-items:center;padding:0;transition:.15s;
+}
+.mini-btn:hover{background:color-mix(in srgb,var(--accent) 20%, transparent); color:var(--text); border-color:var(--accent)}
+.mini-btn.del{background:var(--danger-bg);border-color:color-mix(in srgb,var(--red) 30%, transparent);color:var(--red)}
+.mini-btn.del:hover{background:color-mix(in srgb,var(--red) 25%, transparent);color:#fff}
+
+.empty{
+  text-align:center;font-size:12px;color:var(--muted);
+  padding:22px 8px;border-radius:10px;border:1px dashed var(--line);
+}
+
+/* ===== Money ===== */
+.money-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel-income{border-top:3px solid color-mix(in srgb,var(--green) 75%, transparent)}
+.panel-expense{border-top:3px solid color-mix(in srgb,var(--red) 75%, transparent)}
+.total{font-size:15px;font-weight:800;padding:4px 13px;border-radius:20px}
+.panel-income .total{color:var(--green);background:color-mix(in srgb,var(--green) 12%, transparent);border:1px solid color-mix(in srgb,var(--green) 30%, transparent)}
+.panel-expense .total{color:var(--red);background:color-mix(in srgb,var(--red) 12%, transparent);border:1px solid color-mix(in srgb,var(--red) 30%, transparent)}
+.tx-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
+.tx{
+  display:flex;align-items:center;gap:9px;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:11px;padding:9px 12px;transition:.18s;animation:fade .2s ease;
+}
+.tx:hover{border-color:color-mix(in srgb,var(--accent) 35%, var(--line))}
+.tx-info{flex:1;min-width:0;cursor:pointer}
+.tx-name{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;word-break:break-word}
+.tx-name .cat{
+  background:color-mix(in srgb,var(--accent) 18%, transparent);
+  color:color-mix(in srgb,var(--accent) 85%, var(--text));
+  padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;
+}
+.tx-date{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.tx-amount{font-size:13.5px;font-weight:800;white-space:nowrap}
+.tx-amount.income{color:var(--green)}
+.tx-amount.expense{color:var(--red)}
+
+/* ===== Dashboard ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+}
+.stat-card .lbl{font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.stat-card .val{font-size:22px;font-weight:800}
+.stat-card .sub{font-size:11px;color:var(--muted);margin-top:4px}
+.stat-card.good .val{color:var(--green)}
+.stat-card.bad .val{color:var(--red)}
+.stat-card.warn .val{color:var(--amber)}
+
+.chart{display:flex;align-items:flex-end;gap:8px;height:140px;padding:10px 0;border-bottom:1px solid var(--line)}
+.chart .bar{flex:1;background:linear-gradient(180deg,var(--accent),var(--accent-2));border-radius:6px 6px 0 0;min-height:4px;position:relative;transition:.3s}
+.chart .bar span{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted)}
+.chart .bar b{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:10px;color:var(--text);font-weight:800}
+.chart-wrap{padding-bottom:24px}
+
+.cat-list{display:flex;flex-direction:column;gap:8px}
+.cat-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.cat-row .name{flex:0 0 90px;font-weight:700;color:var(--text)}
+.cat-row .bar-wrap{flex:1;height:8px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+.cat-row .bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:6px;transition:.3s}
+.cat-row .val{flex:0 0 auto;font-weight:800;color:var(--muted);font-size:12px}
+
+/* ===== Settings ===== */
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.settings-row:last-child{border-bottom:none}
+.settings-row .lbl{font-size:13.5px;font-weight:700}
+.settings-row .desc{font-size:11.5px;color:var(--muted);margin-top:2px}
+.switch{position:relative;width:44px;height:24px;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;cursor:pointer;transition:.2s;flex-shrink:0}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--muted);border-radius:50%;transition:.2s}
+.switch.on{background:var(--accent);border-color:var(--accent)}
+.switch.on::after{background:#fff;transform:translateX(20px)}
+.color-swatches{display:flex;gap:8px}
+.swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s}
+.swatch.active{border-color:var(--text);transform:scale(1.1)}
+.ghost-btn{
+  background:transparent;border:1px solid var(--line);color:var(--text);padding:8px 16px;
+  border-radius:10px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s;
+}
+.ghost-btn:hover{border-color:var(--accent);color:var(--accent)}
+.ghost-btn.danger{border-color:color-mix(in srgb,var(--red) 40%, transparent);color:var(--red)}
+.ghost-btn.danger:hover{background:var(--danger-bg);border-color:var(--red)}
+
+/* ===== Login ===== */
+.login-overlay{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:20px;overflow:auto;
+  background:radial-gradient(900px 520px at 90% -10%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 60%),
+  radial-gradient(800px 500px at 0% 110%,color-mix(in srgb,var(--accent-2) 26%,transparent),transparent 60%),var(--bg)}
+.login-card{width:min(420px,100%);background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--line);border-radius:26px;padding:34px 30px 26px;box-shadow:0 30px 80px rgba(0,0,0,.45);animation:pop .35s ease}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.login-logo{width:68px;height:68px;margin:0 auto 14px;border-radius:22px;display:grid;place-items:center;font-size:30px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 14px 34px color-mix(in srgb,var(--accent) 45%,transparent)}
+.login-card h2{margin:0 0 6px;font-size:23px;font-weight:800;text-align:center}
+.login-card .sub{margin:0 0 22px;font-size:13px;color:var(--muted);text-align:center;line-height:1.7}
+.login-card form{display:flex;flex-direction:column;gap:12px}
+.field{position:relative}
+.field .f-ico{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.65;pointer-events:none}
+.field input{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--text);padding:14px 42px;border-radius:13px;font:inherit;font-size:14px;outline:none;transition:.2s}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.field .eye{position:absolute;inset-inline-end:5px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:15px;border-radius:10px}
+.field .eye:hover{background:color-mix(in srgb,var(--text) 8%,transparent)}
+.btn{width:100%;padding:14px;border-radius:13px;font:inherit;font-weight:800;font-size:14.5px;cursor:pointer;border:none;transition:transform .15s,filter .2s,opacity .2s}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 10px 26px color-mix(in srgb,var(--accent) 35%,transparent)}
+.btn.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+.btn.secondary:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.loading::after{content:"";display:inline-block;width:14px;height:14px;margin-inline-start:9px;vertical-align:-2px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.link-btn{background:none;border:none;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer;padding:6px;border-radius:8px;transition:.15s}
+.link-btn:hover{color:var(--accent)}
+.login-card .error{background:var(--danger-bg);border:1px solid color-mix(in srgb,var(--red) 30%,transparent);color:var(--red);padding:10px 12px;border-radius:11px;font-size:12.5px;line-height:1.7;text-align:center}
+.login-card .error:empty{display:none}
+.divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11.5px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.checking-msg{display:none;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:13px;padding:14px 0 8px}
+.spinner{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+.login-overlay.checking .checking-msg{display:flex}
+.login-overlay.checking form,.login-overlay.checking .sub{display:none}
+
+/* ===== Modal ===== */
+.modal-overlay{
+  position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.55);
+  display:grid;place-items:center;padding:20px;
+}
+.modal-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  padding:22px;width:min(420px,100%);box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.modal-card h3{margin:0 0 14px;font-size:16px}
+.modal-card .fields{display:flex;flex-direction:column;gap:10px}
+.modal-card input,.modal-card select{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  padding:11px 13px;border-radius:10px;font:inherit;font-size:13.5px;outline:none;
+  color-scheme:dark;
+}
+[data-theme="light"] .modal-card input,[data-theme="light"] .modal-card select{color-scheme:light}
+.modal-card input:focus,.modal-card select:focus{border-color:var(--accent)}
+.modal-card .actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.modal-card .actions button{
+  padding:10px 18px;border-radius:10px;font:inherit;font-weight:800;font-size:12.5px;cursor:pointer;border:none;
+}
+.modal-card .actions .save{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.modal-card .actions .cancel{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+
+/* ===== Toast ===== */
+.toast-container{position:fixed;bottom:20px;left:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);
+  display:flex;align-items:center;gap:12px;font-size:13px;min-width:220px;
+  animation:slideIn .25s ease;
+}
+.toast button{
+  background:transparent;border:1px solid var(--accent);color:var(--accent);
+  padding:5px 12px;border-radius:8px;font:inherit;font-weight:800;font-size:12px;cursor:pointer;
+}
+@keyframes slideIn{from{transform:translateX(-20px);opacity:0}to{transform:none;opacity:1}}
+
+/* ===== Pomodoro ===== */
+.pomodoro-widget{
+  position:fixed;bottom:20px;right:20px;z-index:120;
+  background:var(--surface);border:1px solid var(--accent);border-radius:14px;
+  padding:14px 18px;box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 30%, transparent);
+  display:flex;flex-direction:column;align-items:center;gap:6px;min-width:180px;
+}
+.pomodoro-widget .time{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.pomodoro-widget .task-name{font-size:11.5px;color:var(--muted);text-align:center;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pomodoro-widget .pomo-actions{display:flex;gap:6px;margin-top:4px}
+.pomodoro-widget .pomo-actions button{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  padding:5px 10px;border-radius:8px;font:inherit;font-weight:700;font-size:11.5px;cursor:pointer;
+}
+.pomodoro-widget.break .time{color:var(--green)}
+.pomodoro-widget.break{border-color:var(--green);box-shadow:0 10px 30px color-mix(in srgb,var(--green) 30%, transparent)}
+
+/* ===== Focus mode ===== */
+body.focus-mode .sidebar,
+body.focus-mode .money-pill,
+body.focus-mode .balance,
+body.focus-mode .brand,
+body.focus-mode .search-input,
+body.focus-mode #themeBtn,
+body.focus-mode #hideBtn,
+body.focus-mode #userBtn,
+body.focus-mode #view-money,
+body.focus-mode #view-dashboard,
+body.focus-mode #view-settings,
+body.focus-mode #view-tasks .panel:not(.focus-keep),
+body.focus-mode .kanban .col:not([data-status="doing"]) {
+  display:none !important;
+}
+body.focus-mode #view-tasks .panel.focus-keep .panel-head,
+body.focus-mode #view-tasks .panel.focus-keep .add-form,
+body.focus-mode #view-tasks .panel.focus-keep .kanban > .col:not([data-status="doing"]) {
+  display:none !important;
+}
+body.focus-mode #view-tasks .panel.focus-keep .kanban {grid-template-columns:1fr;max-width:720px;margin:0 auto}
+
+/* ===== Responsive ===== */
+@media (max-width:1100px){
+  .search-input{width:140px}
+  .money-pill{display:none}
+}
+@media (max-width:900px){
+  .kanban{grid-template-columns:1fr}
+  .money-grid{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;top:70px;left:0;z-index:55;width:250px;flex-basis:250px;
+    background:var(--surface);border-right:1px solid var(--line);
+    box-shadow:20px 0 50px rgba(0,0,0,.35);
+  }
+  .sidebar.collapsed{width:250px;flex-basis:250px;padding:18px 12px;transform:translateX(-110%);border-right:1px solid var(--line)}
+  .content{padding:14px 12px 50px}
+  .brand-name{display:none}
+  .search-input{width:120px}
+  .balance{padding:5px 10px}
+  .balance strong{font-size:15px}
+  .balance .lbl{display:none}
+}
+@media (max-width:640px){
+  .topbar{height:60px;padding:0 10px;gap:6px}
+  .layout{min-height:calc(100vh - 60px)}
+  .sidebar{top:60px;height:calc(100vh - 60px)}
+  .icon-btn{width:36px;height:36px;flex:0 0 36px;font-size:14px}
+  .search-input{display:none}
+  .add-form{grid-template-columns:1fr 1fr}
+  .add-form button{grid-column:1/-1}
+}
+/* ===== Polish ===== */
+body{font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif}
+button,input,select{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar{box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.brand-name{font-size:16px;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.panel{border-radius:20px;padding:20px}
+.panel-head h2::before{content:"";width:4px;height:18px;border-radius:4px;background:linear-gradient(var(--accent),var(--accent-2))}
+.panel-income .panel-head h2::before,.panel-expense .panel-head h2::before{display:none}
+.task{border-inline-start:3px solid var(--amber)}
+.task.st-doing{border-inline-start-color:var(--accent)}
+.task.st-done{border-inline-start-color:var(--green);opacity:.85}
+.task-actions{max-width:64px}
+.mini-btn{width:28px;height:28px;font-size:13px;border-radius:8px}
+.tx{padding:11px 14px}
+.stat-card{position:relative;overflow:hidden;padding:16px 18px}
+.stat-card::before{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.stat-card.good::before{background:var(--green)}.stat-card.bad::before{background:var(--red)}.stat-card.warn::before{background:var(--amber)}
+.stat-card .val{font-size:26px}
+.nav-item.active{box-shadow:inset 3px 0 0 var(--accent)}
+.empty{background:color-mix(in srgb,var(--text) 2.5%,transparent)}
+.bottom-nav{display:none}
+@media (max-width:900px){
+  .bottom-nav{display:flex;position:fixed;bottom:0;inset-inline:0;z-index:58;gap:4px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+    background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+  .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;border:none;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;border-radius:12px;cursor:pointer}
+  .bn-item span:first-child{font-size:18px}
+  .bn-item.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
+  .content{padding-bottom:96px}
+  .pomodoro-widget{bottom:78px;right:12px}
+  .toast-container{bottom:78px;left:12px}
+}
+body.focus-mode .bottom-nav{display:none!important}
+*,*::before,*::after{font-family:inherit}
+.gt{background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.emo{-webkit-text-fill-color:initial}
+.login-card h2,.modal-card h3{display:flex;align-items:center;gap:8px}
+.login-card h2{justify-content:center}
+.panel,.stat-card,.login-card,.modal-card{border:1.5px solid transparent;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--accent) 60%,transparent),color-mix(in srgb,var(--accent-2) 60%,transparent)) border-box}
+.stat-card{background:linear-gradient(var(--surface-2),var(--surface-2)) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--accent) 60%,transparent),color-mix(in srgb,var(--accent-2) 60%,transparent)) border-box}
+.panel-income{background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--green) 75%,transparent),color-mix(in srgb,var(--accent-2) 50%,transparent)) border-box}
+.panel-expense{background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--red) 75%,transparent),color-mix(in srgb,var(--accent) 50%,transparent)) border-box}
+.tx{border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+.task{border-block-color:color-mix(in srgb,var(--accent) 30%,var(--line));border-inline-end-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+button{transition:opacity .15s,transform .15s,filter .2s,background .2s,border-color .2s,color .2s;-webkit-tap-highlight-color:transparent}
+button:active:not(:disabled),.switch:active{opacity:.5}
+</style>
+</head>
+<body>
+
+<!-- ================= Topbar ================= -->
+<header class="topbar">
+  <button class="icon-btn" id="sidebarToggle" aria-label="Menu">☰</button>
+  <div class="brand">
+    <span class="logo">◆</span>
+    <span class="brand-name">My Tasks and Expenses</span>
+  </div>
+  <span class="task-badge" id="todayTaskCount" title="Tasks remaining today">0</span>
+  <div class="spacer"></div>
+  <input type="search" id="globalSearch" class="search-input" placeholder="🔍 Search..." aria-label="Search">
+  <div class="money-pill income-pill">
+    <span class="lbl">Income</span><strong id="topIncome">0</strong>
+  </div>
+  <div class="money-pill expense-pill">
+    <span class="lbl">Expenses</span><strong id="topExpense">0</strong>
+  </div>
+  <div class="balance" id="balanceBox">
+    <span class="lbl">Available</span><strong id="topBalance">0</strong>
+  </div>
+  <button class="icon-btn" id="hideBtn" title="Hide balances" aria-label="Hide balances">👁</button>
+  <button class="icon-btn" id="themeBtn" title="Dark / light mode" aria-label="Toggle theme">🌙</button>
+  <button class="icon-btn" id="focusBtn" title="Focus mode" aria-label="Focus mode">◎</button>
+  <button class="icon-btn" id="userBtn" title="Account" aria-label="Account">👤</button>
+</header>
+
+<!-- ================= Layout ================= -->
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <button class="nav-item active" data-view="tasks"><span class="ico">✅</span><span>Daily Tasks</span></button>
+    <button class="nav-item" data-view="money"><span class="ico">💰</span><span>Money</span></button>
+    <button class="nav-item" data-view="dashboard"><span class="ico">📊</span><span>Statistics</span></button>
+    <button class="nav-item" data-view="settings"><span class="ico">⚙️</span><span>Settings</span></button>
+    <div class="sidebar-foot" id="sidebarFoot">Loading…</div>
+  </aside>
+
+  <main class="content">
+    <!-- ===== Tasks ===== -->
+    <section class="view" id="view-tasks">
+      <div class="panel focus-keep">
+        <div class="panel-head">
+          <h2><span class="emo">📝</span><span class="gt">Today's Tasks</span> <span class="date-chip" id="todayLabel"></span></h2>
+        </div>
+        <form class="add-form" id="taskForm">
+          <input type="text" id="taskTitle" placeholder="Task title..." autocomplete="off" required>
+          <input type="date" id="taskDate" required>
+          <select id="taskCategory">
+            <option value="">Uncategorized</option>
+            <option>Work</option><option>Personal</option><option>Study</option>
+            <option>Health</option><option>Home</option><option>Other</option>
+          </select>
+          <button type="submit">+ Add Task</button>
+        </form>
+        <div class="kanban">
+          <div class="col" data-status="todo">
+            <div class="col-head"><span class="dot todo"></span> To Do <span class="count" id="count-todo">0</span></div>
+            <div class="col-body" id="list-todo"></div>
+          </div>
+          <div class="col" data-status="doing">
+            <div class="col-head"><span class="dot doing"></span> In Progress <span class="count" id="count-doing">0</span></div>
+            <div class="col-body" id="list-doing"></div>
+          </div>
+          <div class="col" data-status="done">
+            <div class="col-head"><span class="dot done"></span> Done <span class="count" id="count-done">0</span></div>
+            <div class="col-body" id="list-done"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="weekPanel">
+        <div class="panel-head">
+          <h2><span class="emo">🗓️</span><span class="gt">Next Week Plan</span> <span class="date-chip">Scheduled</span></h2>
+        </div>
+        <div class="kanban" style="grid-template-columns:1fr">
+          <div class="col" data-status="todo" data-future="true">
+            <div class="col-head"><span class="dot doing"></span> Upcoming Tasks <span class="count" id="count-future">0</span></div>
+            <div class="col-body" id="list-future"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2><span class="emo">⏳</span><span class="gt">Overdue Tasks</span> <span class="badge-warn" id="backlogCount">0</span></h2>
+        </div>
+        <div class="col" data-status="todo" data-backlog="true" style="min-height:120px">
+          <div class="col-body" id="list-backlog"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Money ===== -->
+    <section class="view" id="view-money" hidden>
+      <div class="money-grid">
+        <div class="panel panel-income">
+          <div class="panel-head">
+            <h2><span class="emo">💵</span><span class="gt">Income</span></h2>
+            <span class="total" id="incomeTotal">0</span>
+          </div>
+          <form class="add-form" id="incomeForm">
+            <input type="text" name="name" placeholder="Income name..." list="incomeNames" autocomplete="off" required>
+            <select name="category">
+              <option value="">Uncategorized</option>
+              <option>Salary</option><option>Project</option><option>Gift</option>
+              <option>Investment</option><option>Other</option>
+            </select>
+            <input type="number" name="amount" step="0.01" min="0" placeholder="Amount" required>
+            <input type="date" name="date" required>
+            <button type="submit">+ Add</button>
+          </form>
+          <ul class="tx-list" id="incomeList"></ul>
+        </div>
+
+        <div class="panel panel-expense">
+          <div class="panel-head">
+            <h2><span class="emo">💸</span><span class="gt">Expenses</span></h2>
+            <span class="total" id="expenseTotal">0</span>
+          </div>
+          <form class="add-form" id="expenseForm">
+            <input type="text" name="name" placeholder="Expense name..." list="expenseNames" autocomplete="off" required>
+            <select name="category">
+              <option value="">Uncategorized</option>
+              <option>Food</option><option>Transport</option><option>Bills</option>
+              <option>Health</option><option>Shopping</option><option>Entertainment</option>
+              <option>Education</option><option>Other</option>
+            </select>
+            <input type="number" name="amount" step="0.01" min="0" placeholder="Amount" required>
+            <input type="date" name="date" required>
+            <button type="submit">+ Add</button>
+          </form>
+          <ul class="tx-list" id="expenseList"></ul>
+        </div>
+      </div>
+      <datalist id="incomeNames"></datalist>
+      <datalist id="expenseNames"></datalist>
+    </section>
+
+    <!-- ===== Dashboard ===== -->
+    <section class="view" id="view-dashboard" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2><span class="emo">⚡</span><span class="gt">Quick Summary</span></h2></div>
+        <div class="stats-grid" id="dashStats"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2><span class="emo">📊</span><span class="gt">Task Completion — Last 7 Days</span></h2></div>
+        <div class="chart-wrap"><div class="chart" id="chart7days"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2><span class="emo">🧾</span><span class="gt">Expenses by Category (This Month)</span></h2></div>
+        <div class="cat-list" id="catBreakdown"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2><span class="emo">📅</span><span class="gt">This Month Totals</span></h2></div>
+        <div class="stats-grid" id="monthStats"></div>
+      </div>
+    </section>
+
+    <!-- ===== Settings ===== -->
+    <section class="view" id="view-settings" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2><span class="emo">🎨</span><span class="gt">Appearance</span></h2></div>
+        <div class="settings-row">
+          <div><div class="lbl">Dark mode</div><div class="desc">Switch between light and dark mode</div></div>
+          <div class="switch" id="themeSwitch"></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="lbl">Hide balances</div><div class="desc">Hide amounts when others can see your screen</div></div>
+          <div class="switch" id="hideSwitch"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2><span class="emo">💾</span><span class="gt">Data</span></h2></div>
+        <div class="settings-row">
+          <div><div class="lbl">Backup</div><div class="desc">Export all data as a JSON file</div></div>
+          <button class="ghost-btn" id="exportBtn">Export</button>
+        </div>
+        <div class="settings-row">
+          <div><div class="lbl">Import</div><div class="desc">Import data from a JSON file</div></div>
+          <button class="ghost-btn" id="importBtn">Import</button>
+          <input type="file" id="importFile" accept="application/json" hidden>
+        </div>
+        <div class="settings-row">
+          <div><div class="lbl">Delete all data</div><div class="desc">This action cannot be undone</div></div>
+          <button class="ghost-btn danger" id="clearBtn">Delete</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2><span class="emo">👤</span><span class="gt">Account</span></h2></div>
+        <div class="settings-row">
+          <div><div class="lbl" id="accountEmail">—</div><div class="desc" id="accountStatus">—</div></div>
+          <button class="ghost-btn danger" id="logoutBtn">Sign out</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= Login ================= -->
+<div class="login-overlay checking" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">◆</div>
+    <h2><span class="emo">👋</span><span class="gt">Welcome back</span></h2>
+    <p class="sub">Sign in to sync your tasks and expenses across your devices</p>
+    <div class="checking-msg"><span class="spinner"></span> Checking your account…</div>
+    <form id="loginForm" novalidate>
+      <div class="field"><span class="f-ico">✉</span><input type="email" id="loginEmail" placeholder="Email" autocomplete="username" inputmode="email"></div>
+      <div class="field"><span class="f-ico">🔒</span><input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"><button type="button" class="eye" id="togglePass" aria-label="Show password">👁</button></div>
+      <div class="error" id="loginError" role="alert"></div>
+      <button type="submit" class="btn primary" id="loginBtn">Sign in</button>
+      <button type="button" class="link-btn" id="resetBtn">Forgot password?</button>
+      <div class="divider"><span>or</span></div>
+      <button type="button" class="btn secondary" id="signupBtn">Create new account</button>
+      <button type="button" class="link-btn" id="skipBtn">Continue without an account (local only)</button>
+    </form>
+  </div>
+</div>
+
+<nav class="bottom-nav" aria-label="Navigation">
+  <button class="bn-item active" data-view="tasks"><span>✅</span><span>Tasks</span></button>
+  <button class="bn-item" data-view="money"><span>💰</span><span>Money</span></button>
+  <button class="bn-item" data-view="dashboard"><span>📊</span><span>Statistics</span></button>
+  <button class="bn-item" data-view="settings"><span>⚙️</span><span>Settings</span></button>
+</nav>
+
+<!-- ================= Modal ================= -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal-card">
+    <h3><span class="emo">✏️</span><span class="gt" id="modalTitle">Edit</span></h3>
+    <div class="fields" id="modalFields"></div>
+    <div class="actions">
+      <button class="cancel" id="modalCancel">Cancel</button>
+      <button class="save" id="modalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Toast ================= -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ================= Pomodoro ================= -->
+<div class="pomodoro-widget" id="pomodoroWidget" hidden>
+  <div class="time" id="pomoTime">25:00</div>
+  <div class="task-name" id="pomoTaskName"></div>
+  <div class="pomo-actions">
+    <button id="pomoToggle">⏸</button>
+    <button id="pomoStop">✕</button>
+  </div>
+</div>
+
+<script type="module">
+/* =========================================================
+   ملاحظة: تم استخدام Firebase 11.10.0 لأن 13.4.0 في مقتطفك
+   غير متوفر على gstatic. إن كان لديك إصدار مختلف، غيّر الرقم
+   في كل روابط الImport أدناه.
+   ========================================================= */
+
+/* ================= Firebase Init ================= */
+const FIREBASE_VERSION = '11.10.0';
+const firebaseConfig = {
+  apiKey: "AIzaSyAZy5TcOBrgbbI1XipxJpLnCKXZ8TL1PUQ",
+  authDomain: "my-days-5abbf.firebaseapp.com",
+  projectId: "my-days-5abbf",
+  storageBucket: "my-days-5abbf.firebasestorage.app",
+  messagingSenderId: "591459914122",
+  appId: "1:591459914122:web:fbc90a7c36b45534a43873",
+  databaseURL: "https://my-days-5abbf-default-rtdb.firebaseio.com"
+};
+
+let fbAuth = null, fbDb = null, fbMod = null, firebaseReady = false;
+let currentUser = null;
+let unsubscribers = [];
+
+const LOCAL_FLAG = 'local_mode';
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+async function initFirebase() {
+  try {
+    const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/`;
+    const [appMod, authMod, dbMod] = await withTimeout(Promise.all([
+      import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-database.js')
+    ]), 12000);
+    const app = appMod.initializeApp(firebaseConfig);
+    fbAuth = authMod.getAuth(app);
+    fbDb   = dbMod.getDatabase(app);
+    fbMod  = { authMod, dbMod };
+    firebaseReady = true;
+    authMod.onAuthStateChanged(fbAuth, user => {
+      currentUser = user;
+      if (user) { try { localStorage.removeItem(LOCAL_FLAG); } catch (e) {} onLoggedIn(); }
+      else if (localStorage.getItem(LOCAL_FLAG)) bootLocalMode();
+      else showLogin();
+    });
+  } catch (e) {
+    console.warn('[Firebase] Failed to load, running in local mode:', e);
+    firebaseReady = false;
+    bootLocalMode();
+    toast('Could not reach the sync service — running in local mode');
+  }
+}
+
+/* ================= State ================= */
+const STORAGE_KEY = 'tasks_money_v2';
+const CURRENCY = '';
+
+const state = {
+  tasks: {},
+  transactions: {},
+  settings: { theme: 'dark', accent: '#6c8cff', hideMoney: false },
+  meta: { streak: 0, lastCompletedDate: '', points: 0 }
+};
+
+let activeView = 'tasks';
+let searchTerm = '';
+let currentModal = null;
+let lastDeleted = null;
+let undoTimeout = null;
+
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+/* ================= Helpers ================= */
+function toISO(d) {
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d - tz).toISOString().slice(0, 10);
+}
+function todayISO() { return toISO(new Date()); }
+function addDaysISO(iso, days) {
+  const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + days); return toISO(d);
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (iso === todayISO()) return 'Today · ' + d + '/' + m;
+  if (iso === addDaysISO(todayISO(), -1)) return 'Yesterday · ' + d + '/' + m;
+  return d + '/' + m + '/' + y;
+}
+function fmtMoney(n) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(n || 0) + (CURRENCY ? ' ' + CURRENCY : '');
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+const CAT_AR = {'عمل':'Work','شخصي':'Personal','دراسة':'Study','صحة':'Health','منزل':'Home','أخرى':'Other','راتب':'Salary','مشروع':'Project','هدية':'Gift','استثمار':'Investment','طعام':'Food','مواصلات':'Transport','فواتير':'Bills','تسوق':'Shopping','ترفيه':'Entertainment','تعليم':'Education','بدون تصنيف':'Uncategorized'};
+const catLabel = c => CAT_AR[c] || c || '';
+function toast(msg, actionLabel, actionFn, timeout = 5000) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span style="flex:1">${esc(msg)}</span>`;
+  if (actionLabel) {
+    const btn = document.createElement('button');
+    btn.textContent = actionLabel;
+    btn.onclick = () => { actionFn(); el.remove(); };
+    el.appendChild(btn);
+  }
+  $('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), timeout);
+}
+
+/* ================= LocalStorage ================= */
+function saveLocal() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    state.tasks = p.tasks || {};
+    state.transactions = p.transactions || {};
+    state.settings = { ...state.settings, ...(p.settings || {}) };
+    state.meta = { ...state.meta, ...(p.meta || {}) };
+  } catch(e) {}
+}
+function applySettings() {
+  document.documentElement.setAttribute('data-theme', state.settings.theme);
+  const tc = document.querySelector('meta[name=theme-color]');
+  if (tc) tc.content = state.settings.theme === 'dark' ? '#13151d' : '#f5f3ff';
+  document.body.classList.toggle('hide-money', !!state.settings.hideMoney);
+  $('themeSwitch')?.classList.toggle('on', state.settings.theme === 'dark');
+  $('hideSwitch')?.classList.toggle('on', !!state.settings.hideMoney);
+  $('themeBtn').textContent = state.settings.theme === 'dark' ? '🌙' : '☀️';
+}
+function shiftHue(hex, deg) {
+  const n = parseInt(hex.replace('#',''), 16);
+  let r = (n>>16)&255, g = (n>>8)&255, b = n&255;
+  // تحويل بسيط
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h=0,s=0,l=(max+min)/510;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    if (max === r) h = ((g-b)/d + (g<b?6:0))/6;
+    else if (max === g) h = ((b-r)/d + 2)/6;
+    else h = ((r-g)/d + 4)/6;
+  }
+  h = ((h*360 + deg) % 360) / 360;
+  if (s === 0) r=g=b=l;
+  else {
+    const hue2rgb = (p,q,t) => {
+      if (t<0) t+=1; if (t>1) t-=1;
+      if (t<1/6) return p+(q-p)*6*t;
+      if (t<1/2) return q;
+      if (t<2/3) return p+(q-p)*(2/3-t)*6;
+      return p;
+    };
+    const q = l < 0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l-q;
+    r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+  }
+  const to = x => Math.round(x*255).toString(16).padStart(2,'0');
+  return '#' + to(r) + to(g) + to(b);
+}
+
+/* ================= Auth Flow ================= */
+function showLogin() {
+  const o = $('loginOverlay');
+  o.hidden = false; o.classList.remove('checking');
+  $('loginError').textContent = '';
+}
+function showApp() {
+  $('loginOverlay').hidden = true;
+}
+function onLoggedIn() {
+  showApp();
+  $('accountEmail').textContent = currentUser.email || currentUser.uid;
+  $('accountStatus').textContent = 'Connected — syncing automatically';
+  // سحب من السحابة
+  subscribeCloud();
+  // دفع أي بيانات محلية غير موجودة في السحابة (مرة واحدة)
+  pushLocalToCloudOnce();
+  loadLocal();
+  renderAll();
+}
+function bootLocalMode() {
+  loadLocal();
+  showApp();
+  $('accountEmail').textContent = 'Local mode';
+  $('accountStatus').textContent = 'Data is saved in this browser only';
+  renderAll();
+}
+function pushLocalToCloudOnce() {
+  if (!firebaseReady || !currentUser) return;
+  const flagKey = `pushed_${currentUser.uid}`;
+  if (localStorage.getItem(flagKey)) return;
+  const userPath = `users/${currentUser.uid}`;
+  const { dbMod } = fbMod;
+  const rootRef = dbMod.ref(fbDb, userPath);
+  dbMod.get(rootRef).then(snap => {
+    if (!snap.exists()) {
+      // أول دخول: ارفع البيانات المحلية إن وُجدت
+      const payload = {
+        tasks: state.tasks || {},
+        transactions: state.transactions || {},
+        settings: state.settings,
+        meta: state.meta
+      };
+      dbMod.set(rootRef, payload).catch(() => {});
+    }
+    localStorage.setItem(flagKey, '1');
+  }).catch(() => {});
+}
+function subscribeCloud() {
+  if (!firebaseReady || !currentUser) return;
+  unsubscribers.forEach(fn => { try { fn(); } catch(e) {} });
+  unsubscribers = [];
+  const { dbMod } = fbMod;
+  const userPath = `users/${currentUser.uid}`;
+
+  const tasksRef = dbMod.ref(fbDb, `${userPath}/tasks`);
+  const txRef = dbMod.ref(fbDb, `${userPath}/transactions`);
+  const settingsRef = dbMod.ref(fbDb, `${userPath}/settings`);
+  const metaRef = dbMod.ref(fbDb, `${userPath}/meta`);
+
+  unsubscribers.push(dbMod.onValue(tasksRef, snap => {
+    state.tasks = snap.val() || {};
+    saveLocal(); renderTasks(); renderDashboard();
+  }));
+  unsubscribers.push(dbMod.onValue(txRef, snap => {
+    state.transactions = snap.val() || {};
+    saveLocal(); renderMoney(); renderDashboard();
+  }));
+  unsubscribers.push(dbMod.onValue(settingsRef, snap => {
+    const v = snap.val();
+    if (v) { state.settings = { ...state.settings, ...v }; applySettings(); saveLocal(); }
+  }));
+  unsubscribers.push(dbMod.onValue(metaRef, snap => {
+    const v = snap.val();
+    if (v) { state.meta = { ...state.meta, ...v }; saveLocal(); }
+  }));
+}
+
+/* ================= Sync helpers ================= */
+function cloudSet(path, value) {
+  if (!firebaseReady || !currentUser) return;
+  fbMod.dbMod.set(fbMod.dbMod.ref(fbDb, `users/${currentUser.uid}/${path}`), value).catch(() => {});
+}
+function cloudUpdate(path, value) {
+  if (!firebaseReady || !currentUser) return;
+  fbMod.dbMod.update(fbMod.dbMod.ref(fbDb, `users/${currentUser.uid}/${path}`), value).catch(() => {});
+}
+function cloudRemove(path) {
+  if (!firebaseReady || !currentUser) return;
+  fbMod.dbMod.remove(fbMod.dbMod.ref(fbDb, `users/${currentUser.uid}/${path}`)).catch(() => {});
+}
+
+/* ================= Tasks ================= */
+function filteredTasks() {
+  const list = Object.values(state.tasks);
+  if (!searchTerm) return list;
+  const q = searchTerm.toLowerCase();
+  return list.filter(t => (t.title || '').toLowerCase().includes(q) || (t.category || '').toLowerCase().includes(q));
+}
+
+function renderTasks() {
+  const today = todayISO();
+  const groups = { todo: [], doing: [], done: [] };
+  const backlog = [], future = [];
+
+  const all = filteredTasks();
+  for (const t of all) {
+    if (t.date === today) (groups[t.status] || groups.todo).push(t);
+    else if (t.date > today) future.push(t);
+    else if (t.status !== 'done') backlog.push(t);
+  }
+
+  const sortFn = (a,b) => (a.order ?? a.createdAt ?? 0) - (b.order ?? b.createdAt ?? 0);
+
+  ['todo','doing','done'].forEach(status => {
+    const list = $('list-' + status);
+    const items = groups[status].sort(sortFn);
+    list.innerHTML = items.length
+      ? ''
+      : '<div class="empty">Drag tasks here</div>';
+    items.forEach(t => list.appendChild(taskCard(t)));
+    $('count-' + status).textContent = items.length;
+  });
+
+  const bl = $('list-backlog');
+  bl.innerHTML = backlog.length ? '' : '<div class="empty">No overdue tasks from previous days 🎉</div>';
+  backlog.sort((a,b) => a.date.localeCompare(b.date) || sortFn(a,b)).forEach(t => bl.appendChild(taskCard(t)));
+  $('backlogCount').textContent = backlog.length;
+
+  const fu = $('list-future');
+  fu.innerHTML = future.length ? '' : '<div class="empty">No tasks scheduled for upcoming days</div>';
+  future.sort((a,b) => a.date.localeCompare(b.date)).forEach(t => fu.appendChild(taskCard(t)));
+  $('count-future').textContent = future.length;
+
+  // شارة عدد Tasks المتبقية Today
+  $('todayTaskCount').textContent = (groups.todo.length + groups.doing.length);
+  $('todayTaskCount').title = `Tasks remaining today: ${groups.todo.length + groups.doing.length}`;
+
+  // تقدّم الإنجاز Todayي = مكافأة
+  updateStreakIfNeeded();
+}
+
+function taskCard(t) {
+  const el = document.createElement('div');
+  el.className = 'task st-' + (t.status || 'todo') + (t.status === 'done' ? ' is-done' : '');
+  el.draggable = true;
+  el.dataset.id = t.id;
+
+  const catHtml = t.category ? `<span class="cat">${esc(catLabel(t.category))}</span>` : '';
+  const pomoHtml = t.pomodoroSessions ? `<span class="pomo">⏱ ${t.pomodoroSessions}</span>` : '';
+
+  el.innerHTML = `
+    <div class="task-main">
+      <div class="task-title">${esc(t.title)}</div>
+      <div class="task-meta">${fmtDate(t.date)} ${catHtml} ${pomoHtml}</div>
+    </div>
+    <div class="task-actions">
+      <button class="mini-btn" data-act="pomo" title="Pomodoro">⏱</button>
+      <button class="mini-btn" data-act="move" title="Move to next status">→</button>
+      <button class="mini-btn" data-act="edit" title="Edit">✎</button>
+      <button class="mini-btn del" data-act="del" title="Delete">×</button>
+    </div>`;
+
+  el.querySelector('.task-main').addEventListener('click', () => openEditTask(t));
+
+  el.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', ev => {
+      ev.stopPropagation();
+      const act = btn.dataset.act;
+      if (act === 'del') deleteTask(t);
+      else if (act === 'edit') openEditTask(t);
+      else if (act === 'pomo') startPomodoro(t);
+      else if (act === 'move') moveTaskNextStatus(t);
+    });
+  });
+
+  el.addEventListener('dragstart', ev => {
+    ev.dataTransfer.setData('text/plain', t.id);
+    ev.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => el.classList.add('dragging'), 0);
+  });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+
+  return el;
+}
+
+function moveTaskNextStatus(t) {
+  const today = todayISO();
+  if (t.date !== today) {
+    // من المتأخرات/المستقبل إلى Today
+    t.date = today;
+    t.status = 'todo';
+  } else {
+    t.status = t.status === 'todo' ? 'doing' : t.status === 'doing' ? 'done' : 'todo';
+    if (t.status === 'done') { awardCompletion(t); }
+  }
+  t.updatedAt = Date.now();
+  state.tasks[t.id] = t;
+  saveLocal();
+  cloudSet(`tasks/${t.id}`, t);
+  renderTasks(); renderDashboard();
+}
+
+function deleteTask(t) {
+  const backup = { ...t };
+  delete state.tasks[t.id];
+  saveLocal();
+  cloudRemove(`tasks/${t.id}`);
+  renderTasks(); renderDashboard();
+  lastDeleted = { kind: 'task', data: backup };
+  toast(`Deleted "${backup.title}"`, 'Undo', () => {
+    state.tasks[backup.id] = backup;
+    saveLocal(); cloudSet(`tasks/${backup.id}`, backup);
+    renderTasks(); renderDashboard();
+    lastDeleted = null;
+  });
+  clearTimeout(undoTimeout);
+  undoTimeout = setTimeout(() => { lastDeleted = null; }, 5500);
+}
+
+function awardCompletion(t) {
+  const today = todayISO();
+  if (state.meta.lastCompletedDate !== today) {
+    state.meta.points = (state.meta.points || 0) + 10;
+    state.meta.streak = (state.meta.streak || 0) + 1;
+    state.meta.lastCompletedDate = today;
+    saveLocal();
+    cloudSet('meta', state.meta);
+  } else {
+    state.meta.points = (state.meta.points || 0) + 10;
+    saveLocal();
+    cloudSet('meta', state.meta);
+  }
+}
+function updateStreakIfNeeded() {
+  if (state.meta.lastCompletedDate && state.meta.lastCompletedDate !== todayISO()) {
+    const diff = daysBetween(state.meta.lastCompletedDate, todayISO());
+    if (diff > 1) { state.meta.streak = 0; saveLocal(); cloudSet('meta', state.meta); }
+  }
+}
+function daysBetween(a, b) {
+  return Math.round((new Date(b) - new Date(a)) / 86400000);
+}
+
+/* ================= Drag & Drop ================= */
+function initDnD() {
+  document.querySelectorAll('.col[data-status]').forEach(col => {
+    col.addEventListener('dragover', ev => {
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = 'move';
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', ev => {
+      if (!ev.relatedTarget || !col.contains(ev.relatedTarget)) col.classList.remove('drag-over');
+    });
+    col.addEventListener('drop', ev => {
+      ev.preventDefault();
+      col.classList.remove('drag-over');
+      const id = ev.dataTransfer.getData('text/plain');
+      const t = state.tasks[id];
+      if (!t) return;
+      const today = todayISO();
+
+      if (col.dataset.backlog === 'true') {
+        t.status = 'todo';
+        if (t.date >= today) t.date = addDaysISO(today, -1);
+      } else if (col.dataset.future === 'true') {
+        if (t.date <= today) t.date = addDaysISO(today, 1);
+        t.status = 'todo';
+      } else {
+        const oldStatus = t.status;
+        t.status = col.dataset.status;
+        t.date = today;
+        if (oldStatus !== 'done' && t.status === 'done') awardCompletion(t);
+      }
+      t.updatedAt = Date.now();
+      // ترتيب جديد داخل العمود
+      const siblings = Object.values(state.tasks)
+        .filter(x => x.date === t.date && x.status === t.status && x.id !== t.id)
+        .sort((a,b) => (a.order ?? a.createdAt ?? 0) - (b.order ?? b.createdAt ?? 0));
+      let order = 0;
+      siblings.forEach(s => { s.order = order++; });
+      t.order = order;
+      siblings.forEach(s => cloudSet(`tasks/${s.id}`, s));
+      state.tasks[t.id] = t;
+      saveLocal();
+      cloudSet(`tasks/${t.id}`, t);
+      renderTasks(); renderDashboard();
+    });
+  });
+}
+
+/* ================= Edit Modal ================= */
+function openEditTask(t) {
+  currentModal = { kind: 'task', id: t.id };
+  $('modalTitle').textContent = 'Edit Task';
+  $('modalFields').innerHTML = `
+    <input type="text" id="mTitle" placeholder="Title" value="${esc(t.title)}">
+    <input type="date" id="mDate" value="${t.date}">
+    <select id="mCat">
+      <option value="">Uncategorized</option>
+      ${['Work','Personal','Study','Health','Home','Other'].map(c => `<option ${catLabel(t.category)===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+    <select id="mStatus">
+      <option value="todo" ${t.status==='todo'?'selected':''}>To Do</option>
+      <option value="doing" ${t.status==='doing'?'selected':''}>In Progress</option>
+      <option value="done" ${t.status==='done'?'selected':''}>Done</option>
+    </select>`;
+  $('modalOverlay').hidden = false;
+  $('mTitle').focus();
+}
+function openEditTx(tx, type) {
+  currentModal = { kind: 'tx', id: tx.id };
+  $('modalTitle').textContent = 'Edit Transaction';
+  const cats = type === 'income'
+    ? ['Salary','Project','Gift','Investment','Other']
+    : ['Food','Transport','Bills','Health','Shopping','Entertainment','Education','Other'];
+  $('modalFields').innerHTML = `
+    <input type="text" id="mName" placeholder="Name" value="${esc(tx.name)}">
+    <select id="mCat">
+      <option value="">Uncategorized</option>
+      ${cats.map(c => `<option ${catLabel(tx.category)===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+    <input type="number" id="mAmount" step="0.01" min="0" value="${tx.amount}">
+    <input type="date" id="mDate" value="${tx.date}">`;
+  $('modalOverlay').hidden = false;
+  $('mName').focus();
+}
+function closeModal() { currentModal = null; $('modalOverlay').hidden = true; }
+function saveModal() {
+  if (!currentModal) return;
+  if (currentModal.kind === 'task') {
+    const t = state.tasks[currentModal.id];
+    if (!t) return;
+    const newTitle = $('mTitle').value.trim();
+    if (!newTitle) { toast('Title is required'); return; }
+    const newStatus = $('mStatus').value;
+    if (t.status !== 'done' && newStatus === 'done') awardCompletion(t);
+    t.title = newTitle;
+    t.date = $('mDate').value || todayISO();
+    t.category = $('mCat').value;
+    t.status = newStatus;
+    t.updatedAt = Date.now();
+    state.tasks[t.id] = t;
+    saveLocal(); cloudSet(`tasks/${t.id}`, t);
+    closeModal(); renderTasks(); renderDashboard();
+  } else if (currentModal.kind === 'tx') {
+    const tx = state.transactions[currentModal.id];
+    if (!tx) return;
+    const newName = $('mName').value.trim();
+    const newAmount = parseFloat($('mAmount').value);
+    if (!newName || !isFinite(newAmount) || newAmount < 0) { toast('Please check the fields'); return; }
+    tx.name = newName;
+    tx.amount = newAmount;
+    tx.category = $('mCat').value;
+    tx.date = $('mDate').value || todayISO();
+    tx.updatedAt = Date.now();
+    state.transactions[tx.id] = tx;
+    saveLocal(); cloudSet(`transactions/${tx.id}`, tx);
+    closeModal(); renderMoney(); renderDashboard();
+  }
+}
+
+/* ================= Money ================= */
+function renderMoney() {
+  const incomes = Object.values(state.transactions).filter(t => t.type === 'income')
+    .filter(t => !searchTerm || (t.name||'').toLowerCase().includes(searchTerm.toLowerCase()) || (t.category||'').toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  const expenses = Object.values(state.transactions).filter(t => t.type === 'expense')
+    .filter(t => !searchTerm || (t.name||'').toLowerCase().includes(searchTerm.toLowerCase()) || (t.category||'').toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+
+  const incTotal = incomes.reduce((s,t) => s + Number(t.amount||0), 0);
+  const expTotal = expenses.reduce((s,t) => s + Number(t.amount||0), 0);
+  const balance = incTotal - expTotal;
+
+  $('topIncome').textContent = fmtMoney(incTotal);
+  $('topExpense').textContent = fmtMoney(expTotal);
+  $('topBalance').textContent = fmtMoney(balance);
+  $('balanceBox').classList.toggle('negative', balance < 0);
+  $('incomeTotal').textContent = fmtMoney(incTotal);
+  $('expenseTotal').textContent = fmtMoney(expTotal);
+
+  renderTxList($('incomeList'), incomes, 'income');
+  renderTxList($('expenseList'), expenses, 'expense');
+
+  // اقتراحات datalist
+  const all = Object.values(state.transactions);
+  fillDatalist('incomeNames', [...new Set(all.filter(t=>t.type==='income').map(t=>t.name))]);
+  fillDatalist('expenseNames', [...new Set(all.filter(t=>t.type==='expense').map(t=>t.name))]);
+}
+function fillDatalist(id, items) {
+  $(id).innerHTML = items.map(n => `<option value="${esc(n)}">`).join('');
+}
+function renderTxList(container, items, type) {
+  container.innerHTML = '';
+  if (!items.length) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = type === 'income' ? 'No income recorded' : 'No expenses recorded';
+    container.appendChild(li);
+    return;
+  }
+  items.forEach(t => {
+    const li = document.createElement('li');
+    li.className = 'tx';
+    const catHtml = t.category ? `<span class="cat">${esc(catLabel(t.category))}</span>` : '';
+    li.innerHTML = `
+      <div class="tx-info">
+        <span class="tx-name">${esc(t.name)} ${catHtml}</span>
+        <span class="tx-date">${fmtDate(t.date)}</span>
+      </div>
+      <span class="tx-amount ${t.type}">${t.type==='income'?'+':'−'} ${fmtMoney(t.amount)}</span>
+      <button class="mini-btn del" title="Delete">×</button>`;
+    li.querySelector('.tx-info').addEventListener('click', () => openEditTx(t, type));
+    li.querySelector('.del').addEventListener('click', () => deleteTx(t));
+    container.appendChild(li);
+  });
+}
+function deleteTx(tx) {
+  const backup = { ...tx };
+  delete state.transactions[tx.id];
+  saveLocal(); cloudRemove(`transactions/${tx.id}`);
+  renderMoney(); renderDashboard();
+  toast(`Deleted "${backup.name}"`, 'Undo', () => {
+    state.transactions[backup.id] = backup;
+    saveLocal(); cloudSet(`transactions/${backup.id}`, backup);
+    renderMoney(); renderDashboard();
+  });
+}
+
+/* ================= Dashboard ================= */
+function renderDashboard() {
+  if (!$('view-dashboard')) return;
+  const today = todayISO();
+  const tasks = Object.values(state.tasks);
+  const txs = Object.values(state.transactions);
+
+  const todayTasks = tasks.filter(t => t.date === today);
+  const todayDone = todayTasks.filter(t => t.status === 'done').length;
+  const todayRate = todayTasks.length ? Math.round(todayDone / todayTasks.length * 100) : 0;
+
+  const last7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = addDaysISO(today, -i);
+    const dayTasks = tasks.filter(t => t.date === day);
+    const done = dayTasks.filter(t => t.status === 'done').length;
+    const rate = dayTasks.length ? Math.round(done / dayTasks.length * 100) : 0;
+    last7.push({ day, rate, done, total: dayTasks.length });
+  }
+
+  const month = today.slice(0, 7);
+  const monthInc = txs.filter(t => t.type === 'income' && t.date.startsWith(month)).reduce((s,t) => s + Number(t.amount||0), 0);
+  const monthExp = txs.filter(t => t.type === 'expense' && t.date.startsWith(month)).reduce((s,t) => s + Number(t.amount||0), 0);
+
+  const stats = [
+    { lbl: 'Tasks today', val: `${todayDone}/${todayTasks.length}`, sub: `Completion ${todayRate}%`, cls: todayRate >= 70 ? 'good' : todayRate >= 40 ? 'warn' : 'bad' },
+    { lbl: 'Completion rate (7 days)', val: Math.round(last7.reduce((s,x)=>s+x.rate,0)/7) + '%', sub: 'Average', cls: '' },
+    { lbl: 'Monthly expenses', val: fmtMoney(monthExp), sub: month, cls: 'bad' },
+    { lbl: 'Monthly net', val: fmtMoney(monthInc - monthExp), sub: `Income ${fmtMoney(monthInc)}`, cls: (monthInc - monthExp) >= 0 ? 'good' : 'bad' },
+    { lbl: 'Streak', val: `🔥 ${state.meta.streak || 0}`, sub: 'days in a row', cls: 'warn' },
+    { lbl: 'Points', val: state.meta.points || 0, sub: 'Total', cls: '' }
+  ];
+  $('dashStats').innerHTML = stats.map(s => `
+    <div class="stat-card ${s.cls}">
+      <div class="lbl">${s.lbl}</div>
+      <div class="val">${s.val}</div>
+      <div class="sub">${s.sub}</div>
+    </div>`).join('');
+
+  $('monthStats').innerHTML = `
+    <div class="stat-card good"><div class="lbl">Monthly income</div><div class="val">${fmtMoney(monthInc)}</div></div>
+    <div class="stat-card bad"><div class="lbl">Monthly expenses</div><div class="val">${fmtMoney(monthExp)}</div></div>
+    <div class="stat-card ${(monthInc-monthExp)>=0?'good':'bad'}"><div class="lbl">Net</div><div class="val">${fmtMoney(monthInc - monthExp)}</div></div>`;
+
+  // chart 7 days
+  const maxRate = Math.max(10, ...last7.map(x => x.rate));
+  $('chart7days').innerHTML = last7.map(x => {
+    const daysAr = ['S','M','T','W','T','F','S'];
+    const d = new Date(x.day + 'T00:00:00');
+    const label = daysAr[d.getDay()];
+    const h = Math.max(4, (x.rate / maxRate) * 100);
+    return `<div class="bar" style="height:${h}%" title="${x.rate}% (${x.done}/${x.total})">
+      <b>${x.rate}%</b><span>${label}</span>
+    </div>`;
+  }).join('');
+
+  // category breakdown (expenses this month)
+  const catMap = {};
+  txs.filter(t => t.type === 'expense' && t.date.startsWith(month)).forEach(t => {
+    const c = catLabel(t.category) || 'Uncategorized';
+    catMap[c] = (catMap[c] || 0) + Number(t.amount || 0);
+  });
+  const cats = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
+  const maxCat = cats.length ? cats[0][1] : 1;
+  $('catBreakdown').innerHTML = cats.length
+    ? cats.map(([c, v]) => `
+      <div class="cat-row">
+        <span class="name">${esc(c)}</span>
+        <div class="bar-wrap"><div class="bar" style="width:${(v/maxCat)*100}%"></div></div>
+        <span class="val">${fmtMoney(v)}</span>
+      </div>`).join('')
+    : '<div class="empty">No expenses this month</div>';
+}
+
+/* ================= Pomodoro ================= */
+const pomo = { taskId: null, taskName: '', remaining: 25*60, running: false, break: false, timer: null };
+function startPomodoro(task) {
+  pomo.taskId = task.id;
+  pomo.taskName = task.title;
+  pomo.remaining = 25*60;
+  pomo.break = false;
+  pomo.running = true;
+  $('pomodoroWidget').hidden = false;
+  $('pomodoroWidget').classList.remove('break');
+  $('pomoTaskName').textContent = task.title;
+  $('pomoToggle').textContent = '⏸';
+  tickPomo(true);
+}
+function tickPomo(start) {
+  clearInterval(pomo.timer);
+  if (start && pomo.running) {
+    pomo.timer = setInterval(() => {
+      if (!pomo.running) return;
+      pomo.remaining--;
+      if (pomo.remaining <= 0) {
+        if (!pomo.break) {
+          // انتهت جلسة التركيز
+          const t = state.tasks[pomo.taskId];
+          if (t) {
+            t.pomodoroSessions = (t.pomodoroSessions || 0) + 1;
+            t.updatedAt = Date.now();
+            state.tasks[t.id] = t;
+            saveLocal(); cloudSet(`tasks/${t.id}`, t);
+            renderTasks();
+          }
+          toast('Focus session complete! Take a 5-minute break ☕');
+          pomo.break = true;
+          pomo.remaining = 5*60;
+          $('pomodoroWidget').classList.add('break');
+        } else {
+          toast('Break is over. Ready for a new session?');
+          stopPomodoro();
+          return;
+        }
+      }
+      updatePomoUI();
+    }, 1000);
+  }
+  updatePomoUI();
+}
+function updatePomoUI() {
+  const m = Math.floor(pomo.remaining / 60).toString().padStart(2, '0');
+  const s = (pomo.remaining % 60).toString().padStart(2, '0');
+  $('pomoTime').textContent = `${m}:${s}`;
+}
+function stopPomodoro() {
+  clearInterval(pomo.timer);
+  pomo.running = false;
+  pomo.taskId = null;
+  $('pomodoroWidget').hidden = true;
+  $('pomodoroWidget').classList.remove('break');
+}
+
+/* ================= Views & Nav ================= */
+function switchView(view) {
+  activeView = view;
+  document.querySelectorAll('.view').forEach(v => v.hidden = true);
+  $('view-' + view).hidden = false;
+  document.querySelectorAll('.nav-item, .bn-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  if (window.innerWidth <= 900) $('sidebar').classList.add('collapsed');
+  if (view === 'dashboard') renderDashboard();
+}
+
+/* ================= Forms ================= */
+function initForms() {
+  $('taskForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = $('taskTitle').value.trim();
+    const date = $('taskDate').value || todayISO();
+    if (!title) return;
+    const t = {
+      id: uid(), title, date,
+      category: $('taskCategory').value || '',
+      status: 'todo',
+      order: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    state.tasks[t.id] = t;
+    $('taskTitle').value = '';
+    $('taskDate').value = todayISO();
+    $('taskCategory').value = '';
+    saveLocal(); cloudSet(`tasks/${t.id}`, t);
+    renderTasks(); renderDashboard();
+    $('taskTitle').focus();
+  });
+
+  const bindMoney = (formId, type) => {
+    $(formId).addEventListener('submit', e => {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const name = String(fd.get('name') || '').trim();
+      const amount = parseFloat(fd.get('amount'));
+      const date = fd.get('date') || todayISO();
+      const category = String(fd.get('category') || '');
+      if (!name) { toast('Name is required'); return; }
+      if (!isFinite(amount) || amount < 0) { toast('Invalid amount (negative values not allowed)'); return; }
+      const tx = {
+        id: uid(), type, name, amount, date, category,
+        createdAt: Date.now(), updatedAt: Date.now()
+      };
+      state.transactions[tx.id] = tx;
+      form.reset();
+      form.querySelector('input[name=date]').value = todayISO();
+      saveLocal(); cloudSet(`transactions/${tx.id}`, tx);
+      renderMoney(); renderDashboard();
+      form.querySelector('input[name=name]').focus();
+    });
+  };
+  bindMoney('incomeForm', 'income');
+  bindMoney('expenseForm', 'expense');
+}
+
+/* ================= Settings ================= */
+function initSettings() {
+  $('themeSwitch').addEventListener('click', () => {
+    state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+    applySettings(); saveLocal(); cloudSet('settings', state.settings);
+  });
+  $('themeBtn').addEventListener('click', () => {
+    state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+    applySettings(); saveLocal(); cloudSet('settings', state.settings);
+  });
+  $('hideSwitch').addEventListener('click', () => {
+    state.settings.hideMoney = !state.settings.hideMoney;
+    applySettings(); saveLocal(); cloudSet('settings', state.settings);
+  });
+  $('hideBtn').addEventListener('click', () => {
+    state.settings.hideMoney = !state.settings.hideMoney;
+    applySettings(); saveLocal(); cloudSet('settings', state.settings);
+  });
+
+
+  $('exportBtn').addEventListener('click', () => {
+    const data = JSON.stringify(state, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `backup-${todayISO()}.json`;
+    a.click();
+    toast('Backup exported');
+  });
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!confirm('Current data will be replaced. Continue?')) return;
+        state.tasks = data.tasks || {};
+        state.transactions = data.transactions || {};
+        state.settings = { ...state.settings, ...(data.settings || {}) };
+        state.meta = { ...state.meta, ...(data.meta || {}) };
+        saveLocal();
+        if (firebaseReady && currentUser) {
+          cloudSet('tasks', state.tasks);
+          cloudSet('transactions', state.transactions);
+          cloudSet('settings', state.settings);
+          cloudSet('meta', state.meta);
+        }
+        applySettings(); renderAll();
+        toast('Import successful');
+      } catch (err) { toast('Invalid file'); }
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  });
+  $('clearBtn').addEventListener('click', () => {
+    if (!confirm('All tasks and transactions will be permanently deleted. Continue?')) return;
+    state.tasks = {}; state.transactions = {};
+    saveLocal();
+    if (firebaseReady && currentUser) {
+      cloudRemove('tasks'); cloudRemove('transactions');
+    }
+    renderAll(); toast('Deleted');
+  });
+
+  $('logoutBtn').addEventListener('click', async () => {
+    if (!firebaseReady || !currentUser) { toast('No account signed in'); return; }
+    if (!confirm('Sign out?')) return;
+    try {
+      unsubscribers.forEach(fn => { try { fn(); } catch(e) {} });
+      unsubscribers = [];
+      await fbMod.authMod.signOut(fbAuth);
+    } catch (e) { toast('Could not sign out'); }
+  });
+}
+
+/* ================= Auth UI ================= */
+function initAuthUI() {
+  const ids = ['loginBtn', 'signupBtn', 'skipBtn', 'resetBtn'];
+  const busy = (id, on) => { ids.forEach(i => $(i).disabled = on); $(id).classList.toggle('loading', on); };
+  const err = m => { $('loginError').textContent = m || ''; };
+  const creds = () => ({ email: $('loginEmail').value.trim(), pass: $('loginPassword').value });
+  const ready = () => {
+    if (firebaseReady) return true;
+    err('Sign-in service is unavailable right now — check your connection or use local mode');
+    return false;
+  };
+  const run = async (id, fn) => {
+    busy(id, true);
+    try { await fn(); } catch (e) { console.error('[Auth]', e); err(mapAuthError(e.code)); }
+    finally { busy(id, false); }
+  };
+
+  $('loginForm').addEventListener('submit', e => {
+    e.preventDefault(); err();
+    const { email, pass } = creds();
+    if (!email || !pass) return err('Enter your email and password');
+    if (!ready()) return;
+    run('loginBtn', () => fbMod.authMod.signInWithEmailAndPassword(fbAuth, email, pass));
+  });
+  $('signupBtn').addEventListener('click', () => {
+    err();
+    const { email, pass } = creds();
+    if (!email) return err('Enter your email');
+    if (pass.length < 6) return err('Password must be at least 6 characters');
+    if (!ready()) return;
+    run('signupBtn', () => fbMod.authMod.createUserWithEmailAndPassword(fbAuth, email, pass));
+  });
+  $('resetBtn').addEventListener('click', () => {
+    err();
+    const { email } = creds();
+    if (!email) return err('Enter your email first, then click “Forgot password?”');
+    if (!ready()) return;
+    run('resetBtn', async () => {
+      await fbMod.authMod.sendPasswordResetEmail(fbAuth, email);
+      toast('Password reset link sent to your email');
+    });
+  });
+  $('skipBtn').addEventListener('click', () => {
+    try { localStorage.setItem(LOCAL_FLAG, '1'); } catch (e) {}
+    bootLocalMode();
+  });
+  $('togglePass').addEventListener('click', () => {
+    const p = $('loginPassword'), show = p.type === 'password';
+    p.type = show ? 'text' : 'password';
+    $('togglePass').textContent = show ? '🙈' : '👁';
+  });
+  $('userBtn').addEventListener('click', () => {
+    if (currentUser) switchView('settings'); else showLogin();
+  });
+}
+function mapAuthError(code) {
+  const m = {
+    'auth/invalid-email': 'Invalid email format',
+    'auth/missing-password': 'Enter your password',
+    'auth/user-not-found': 'No account found for this email — click “Create new account”',
+    'auth/wrong-password': 'Incorrect password',
+    'auth/invalid-credential': 'Incorrect email or password, or no account exists for this email. If you have not created an account yet, click “Create new account”',
+    'auth/email-already-in-use': 'This email is already registered — try signing in',
+    'auth/weak-password': 'Password is too weak (at least 6 characters)',
+    'auth/user-disabled': 'This account has been disabled',
+    'auth/network-request-failed': 'Could not connect to the internet',
+    'auth/too-many-requests': 'Too many attempts, try again later',
+    'auth/operation-not-allowed': 'Email/password sign-in is not enabled in Firebase (Authentication ← Sign-in method)',
+    'auth/unauthorized-domain': 'This domain is not authorized in Firebase (Authentication ← Settings ← Authorized domains)',
+    'auth/invalid-api-key': 'Invalid Firebase API key'
+  };
+  return m[code] || ('Action failed (' + (code || 'unknown') + ')');
+}
+
+/* ================= Keyboard Shortcuts ================= */
+function initKeyboard() {
+  document.addEventListener('keydown', e => {
+    // تجاهل عند الكتابة في حقل
+    const tag = (e.target.tagName || '').toLowerCase();
+    const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+
+    if (e.key === 'Escape') {
+      if (!$('modalOverlay').hidden) closeModal();
+      else if (document.body.classList.contains('focus-mode')) toggleFocus();
+      else if (typing) e.target.blur();
+      return;
+    }
+    if (typing) return;
+    if (e.key === 'n' || e.key === 'N') {
+      e.preventDefault();
+      switchView('tasks');
+      $('taskTitle').focus();
+    } else if (e.key === 'm' || e.key === 'M') {
+      e.preventDefault();
+      switchView('money');
+      document.querySelector('#expenseForm input[name=name]')?.focus();
+    } else if (e.key === '/') {
+      e.preventDefault();
+      $('globalSearch').focus();
+    } else if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      toggleFocus();
+    }
+  });
+}
+function toggleFocus() {
+  document.body.classList.toggle('focus-mode');
+  $('focusBtn').classList.toggle('active', document.body.classList.contains('focus-mode'));
+  if (document.body.classList.contains('focus-mode') && activeView !== 'tasks') switchView('tasks');
+}
+
+/* ================= Search ================= */
+function initSearch() {
+  let t;
+  $('globalSearch').addEventListener('input', e => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      searchTerm = e.target.value.trim();
+      renderTasks(); renderMoney();
+    }, 180);
+  });
+}
+
+/* ================= Sidebar Toggle ================= */
+function initSidebar() {
+  $('sidebarToggle').addEventListener('click', () => $('sidebar').classList.toggle('collapsed'));
+  document.querySelectorAll('.nav-item, .bn-item').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+  if (window.innerWidth <= 900) $('sidebar').classList.add('collapsed');
+  $('focusBtn').addEventListener('click', toggleFocus);
+}
+
+/* ================= Modal ================= */
+function initModal() {
+  $('modalCancel').addEventListener('click', closeModal);
+  $('modalSave').addEventListener('click', saveModal);
+  $('modalOverlay').addEventListener('click', e => { if (e.target.id === 'modalOverlay') closeModal(); });
+}
+
+/* ================= Pomodoro controls ================= */
+function initPomodoroControls() {
+  $('pomoToggle').addEventListener('click', () => {
+    pomo.running = !pomo.running;
+    $('pomoToggle').textContent = pomo.running ? '⏸' : '▶';
+    if (pomo.running) tickPomo(true);
+    else clearInterval(pomo.timer);
+  });
+  $('pomoStop').addEventListener('click', stopPomodoro);
+}
+
+/* ================= Manifest ================= */
+function buildManifest() {
+  if (!/^https?:$/.test(location.protocol)) return; // file:// does not support manifest
+  const mk = size => {
+    const c = document.createElement('canvas'); c.width = c.height = size;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, size, size);
+    g.addColorStop(0, '#6c8cff'); g.addColorStop(1, '#8b5cf6');
+    x.fillStyle = g; x.beginPath();
+    if (x.roundRect) x.roundRect(0, 0, size, size, size * .22); else x.rect(0, 0, size, size);
+    x.fill();
+    x.fillStyle = '#fff'; x.font = `bold ${size * .5}px sans-serif`;
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText('◆', size / 2, size / 2 + size * .03);
+    return c.toDataURL('image/png');
+  };
+  const url = location.href.split('#')[0].split('?')[0];
+  const manifest = {
+    name: 'My Tasks and Expenses', short_name: 'Tasks', lang: 'en', dir: 'ltr',
+    id: url, start_url: url, scope: url.replace(/[^/]*$/, ''),
+    display: 'standalone', background_color: '#0e1016', theme_color: '#6c8cff',
+    icons: [
+      { src: mk(192), sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: mk(512), sizes: '512x512', type: 'image/png', purpose: 'any' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  $('manifestLink').href = URL.createObjectURL(blob);
+}
+
+/* ================= Render all ================= */
+function renderAll() {
+  $('todayLabel').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+  $('taskDate').value = todayISO();
+  document.querySelectorAll('#incomeForm input[name=date], #expenseForm input[name=date]')
+    .forEach(i => i.value = todayISO());
+  applySettings();
+  renderTasks(); renderMoney(); renderDashboard();
+  $('sidebarFoot').innerHTML = firebaseReady && currentUser
+    ? `Signed in as ${esc(currentUser.email || '')}`
+    : 'Local mode — data is saved in this browser only';
+}
+
+/* ================= Boot ================= */
+function boot() {
+  buildManifest();
+  loadLocal();
+  applySettings();
+  initSidebar(); initForms(); initSettings(); initAuthUI(); initKeyboard(); initSearch(); initModal(); initPomodoroControls();
+  initDnD();
+  $('todayLabel').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+  $('taskDate').value = todayISO();
+  document.querySelectorAll('#incomeForm input[name=date], #expenseForm input[name=date]')
+    .forEach(i => i.value = todayISO());
+  renderTasks(); renderMoney(); renderDashboard();
+}
+
+boot();
+initFirebase();
+</script>
+</body>
+</html>
